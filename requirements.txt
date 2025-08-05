@@ -1,7 +1,7 @@
 tensorflow
 pandas
-pillow 
 gdown
+pillow 
 dvc
 mlflow==2.2.2
 notebook
