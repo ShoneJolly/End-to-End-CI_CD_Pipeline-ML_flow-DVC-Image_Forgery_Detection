@@ -1,6 +1,8 @@
 from ImageForgeryDetection.constants import *
 from ImageForgeryDetection.utils.common import read_yaml,create_directories
-from ImageForgeryDetection.entity.config_entity import (DataIngestionConfig,DataPreprocessingConfig)
+from ImageForgeryDetection.entity.config_entity import (DataIngestionConfig,
+                                                        DataPreprocessingConfig,
+                                                        ModelTrainerConfig)
 
 class ConfigurationManager:
     def __init__(
@@ -45,3 +47,18 @@ class ConfigurationManager:
         )
 
         return data_preprocessing_config
+    
+    def get_model_trainer_config(self) -> ModelTrainerConfig:
+        
+        config = self.config.model_trainer
+        params = self.params.trainer
+
+        create_directories([config.root_dir])
+        model_trainer_config = ModelTrainerConfig(
+            root_dir=Path(config.root_dir),
+            load_data=Path(config.load_data),
+            save_model=Path(config.save_model),
+            params=params
+        )
+
+        return model_trainer_config
