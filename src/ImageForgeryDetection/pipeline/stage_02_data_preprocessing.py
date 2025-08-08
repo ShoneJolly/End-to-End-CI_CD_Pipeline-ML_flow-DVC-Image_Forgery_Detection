@@ -1,25 +1,25 @@
 from ImageForgeryDetection.config.configuration import ConfigurationManager
-from ImageForgeryDetection.components.data_ingestion import DataIngestion
+from ImageForgeryDetection.components.data_preprocessing import DataPreprocessing
 from ImageForgeryDetection import logger
 
-STAGE_NAME = "Data Ingestion stage"
+STAGE_NAME = "Data Preprocessing stage"
 
-class DataIngestionTrainingPipeline:
+class DataPreprocessingTrainingPipeline:
     def __init__(self):
         pass
-    
+
     def main(self):
         config = ConfigurationManager()
-        data_ingestion_config = config.get_data_ingestion_config()
-        data_ingestion = DataIngestion(config=data_ingestion_config)
-        data_ingestion.download_file()
-        data_ingestion.extract_zip_file()
+        data_preprocessing_config = config.get_data_preprocessing_config()
+        preprocessor = DataPreprocessing(config=data_preprocessing_config)
+        X, y = preprocessor.save_dataset()
+        logger.info("Data preprocessing pipeline completed")
 
 
 if __name__=='__main__':
     try:
         logger.info(f">>>>> stage {STAGE_NAME} started <<<<<")
-        obj = DataIngestionTrainingPipeline()
+        obj = DataPreprocessingTrainingPipeline()
         obj.main()
         logger.info(f">>>>> stage {STAGE_NAME} completed <<<<<\n\nx=================x")
     except Exception as e:
