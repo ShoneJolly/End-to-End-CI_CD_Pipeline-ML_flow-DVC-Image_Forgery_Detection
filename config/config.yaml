@@ -16,3 +16,9 @@ model_trainer:
   root_dir: artifacts/model_trainer
   load_data: artifacts/data_preprocessing/pickle
   save_model: artifacts/model_trainer/model
+
+model_evaluation:
+  model_path: artifacts/model_trainer/model
+  model: model.keras
+  load_data: artifacts/data_preprocessing/pickle
+  mlflow_uri: https://dagshub.com/ShoneJolly/CI_CD_Pipeline-ML_flow-DVC.mlflow

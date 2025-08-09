@@ -24,3 +24,12 @@ class ModelTrainerConfig:
     load_data: Path
     save_model: Path
     params: dict
+
+
+@dataclass(frozen=True)
+class ModelEvaluationConfig:
+    model_path: Path
+    model: str
+    load_data: Path
+    mlflow_uri: str
+    params: dict
