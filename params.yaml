@@ -7,7 +7,7 @@ preprocessing:
   valid_extensions: ['.jpg', '.jpeg', '.png']
 
 trainer_evaluation: 
-  batch_size: 24
+  batch_size: 32
   epochs: 15
   optimizer: adam
   metrics: [accuracy, Precision, Recall, F1Score]
