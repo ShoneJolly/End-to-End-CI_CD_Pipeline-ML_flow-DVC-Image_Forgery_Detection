@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Forgery Detection Wizard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .header {
+            background: linear-gradient(to right, #1e3a8a, #3b82f6);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .container {
+            min-height: calc(100vh - 80px);
+        }
+        .left, .right {
+            transition: all 0.3s ease;
+        }
+        .left {
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+        .right {
+            background: #f9fafb;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .upload-btn, .reset-btn {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .upload-btn:hover, .reset-btn:hover {
+            transform: translateY(-2px);
+        }
+        .image-preview {
+            max-height: 200px;
+            max-width: 100%;
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .details, .result, .prediction-details {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .drag-drop-area, .prediction-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            background: #ffffff;
+            transition: border-color 0.3s ease;
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .drag-drop-area.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .choose-file-btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .choose-file-btn:hover {
+            background-color: #2563eb;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .left, .right {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            .button-result-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+        }
+        .drag-drop-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .drag-drop-content.hidden {
+            display: none;
+        }
+        .drag-drop-area.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .button-result-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .result {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #374151;
+            background: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <header class="header py-6 text-center text-3xl font-bold">
+        Image Forgery Detection Wizard
+    </header>
+    <div class="container flex flex-col md:flex-row mx-auto px-4 py-6 gap-6">
+        <div class="left w-full md:w-1/2 p-6 flex flex-col items-center">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Upload Image</h2>
+            <div class="drag-drop-area mb-4 w-full max-w-md" id="dragDropArea">
+                <div class="drag-drop-content" id="dragDropContent">
+                    <svg class="mx-auto mb-4 text-gray-400" width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                    <p class="text-gray-600 mb-2">Drop your image here</p>
+                    <p class="text-gray-500 mb-4">or click to browse files</p>
+                    <input type="file" id="imageInput" accept=".png,.jpg,.jpeg" class="hidden">
+                    <button class="choose-file-btn" onclick="document.getElementById('imageInput').click()">Choose File</button>
+                    <p class="text-gray-400 text-sm mt-2">Supports JPG, PNG, GIF up to 10MB</p>
+                </div>
+                <img id="previewImage" src="" alt="" class="image-preview hidden">
+                <img id="dummyUploadImage" src="https://iili.io/FLmFNa4.png" alt="Dummy Upload Image" class="image-preview hidden">
+            </div>
+            <div class="details mt-4 w-full max-w-md text-gray-700" id="imageDetails"></div>
+            <div class="button-result-container">
+                <button onclick="uploadImage()" class="upload-btn bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Upload</button>
+                <button onclick="resetForm()" class="reset-btn bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">Use Another Image</button>
+            </div>
+        </div>
+        <div class="right w-full md:w-1/2 p-6 flex flex-col items-center">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Prediction</h2>
+            <div class="prediction-area w-full max-w-md" id="predictionArea">
+                <img id="dummyImage" src="https://iili.io/FLmFNa4.png" alt="Dummy Image" class="image-preview">
+                <div id="loading" class="loader hidden"></div>
+                <img id="uploadedImage" src="" alt="" class="image-preview hidden">
+            </div>
+            <div class="button-result-container">
+                <div class="result w-full text-gray-700 font-medium text-center" id="predictionResult"></div>
+            </div>
+            <div class="prediction-details mt-4 w-full max-w-md text-gray-700" id="predictionDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        const dropArea = document.getElementById('dragDropArea');
+        const input = document.getElementById('imageInput');
+        const previewImage = document.getElementById('previewImage');
+        const dummyUploadImage = document.getElementById('dummyUploadImage');
+        const dragDropContent = document.getElementById('dragDropContent');
+        const loading = document.getElementById('loading');
+        const uploadedImage = document.getElementById('uploadedImage');
+        const dummyImage = document.getElementById('dummyImage');
+        const predictionResult = document.getElementById('predictionResult');
+        const imageDetails = document.getElementById('imageDetails');
+        const predictionDetails = document.getElementById('predictionDetails');
+
+        // Disable buttons initially
+        const uploadBtn = document.querySelector('.upload-btn');
+        const resetBtn = document.querySelector('.reset-btn');
+        uploadBtn.disabled = true;
+        resetBtn.disabled = true;
+
+        // Drag and drop events
+        dropArea.addEventListener('dragover', (e) => {
+            if (!dropArea.classList.contains('disabled')) {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            }
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('dragover');
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            if (!dropArea.classList.contains('disabled')) {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelection(files[0]);
+                }
+            }
+        });
+
+        input.addEventListener('change', () => {
+            if (!dropArea.classList.contains('disabled') && input.files.length > 0) {
+                handleFileSelection(input.files[0]);
+            }
+        });
+
+        function handleFileSelection(file) {
+            if (!file) {
+                alert('Please select an image');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit');
+                return;
+            }
+            if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+                alert('Unsupported file type. Please upload PNG or JPEG.');
+                return;
+            }
+
+            // Show image preview and hide default content and dummy image
+            const reader = new FileReader();
+            reader.onload = () => {
+                previewImage.src = reader.result;
+                previewImage.classList.remove('hidden');
+                dragDropContent.classList.add('hidden');
+                dummyUploadImage.classList.add('hidden');
+                dropArea.classList.add('disabled');
+                imageDetails.innerHTML = `
+                    <p><strong>File Name:</strong> ${file.name}</p>
+                    <p><strong>File Size:</strong> ${(file.size / 1024).toFixed(2)} KB</p>
+                `;
+                // Enable buttons
+                uploadBtn.disabled = false;
+                resetBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function uploadImage() {
+            const file = input.files[0];
+            if (!file) {
+                alert('Please select an image');
+                return;
+            }
+
+            // Show loading animation and hide images
+            dummyImage.classList.add('hidden');
+            uploadedImage.classList.add('hidden');
+            previewImage.classList.add('hidden');
+            dummyUploadImage.classList.add('hidden');
+            loading.classList.remove('hidden');
+            predictionResult.innerText = '';
+            predictionDetails.innerHTML = '';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    resetForm();
+                    return;
+                }
+                predictionDetails.innerHTML = `
+                    <p><strong>Format:</strong> ${data.format}</p>
+                    <p><strong>Size:</strong> ${data.size}</p>
+                    <p><strong>File Size:</strong> ${data.file_size}</p>
+                `;
+                uploadedImage.src = `data:image/jpeg;base64,${data.image_base64}`;
+                uploadedImage.classList.remove('hidden');
+                predictionResult.innerText = `Prediction: ${data.prediction}`;
+                // Show dummy image in upload area after upload
+                input.value = '';
+                previewImage.src = '';
+                previewImage.classList.add('hidden');
+                dragDropContent.classList.add('hidden');
+                dummyUploadImage.classList.remove('hidden');
+                imageDetails.innerHTML = '';
+                // Disable upload button to prevent re-uploading
+                uploadBtn.disabled = true;
+                dropArea.classList.add('disabled');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing the image');
+                resetForm();
+            })
+            .finally(() => {
+                loading.classList.add('hidden');
+            });
+        }
+
+        function resetForm() {
+            input.value = '';
+            previewImage.src = '';
+            previewImage.classList.add('hidden');
+            dummyUploadImage.classList.add('hidden');
+            dragDropContent.classList.remove('hidden');
+            imageDetails.innerHTML = '';
+            predictionDetails.innerHTML = '';
+            uploadedImage.src = '';
+            uploadedImage.classList.add('hidden');
+            dummyImage.classList.remove('hidden');
+            predictionResult.innerText = '';
+            uploadBtn.disabled = true;
+            resetBtn.disabled = true;
+            dropArea.classList.remove('disabled');
+        }
+    </script>
+</body>
+</html>
